@@ -1,4 +1,4 @@
-FROM ubuntu:18.04 as builder
+FROM ubuntu:16.04 as builder
 
 RUN apt-get update && apt-get install -y \
     build-essential curl git \
@@ -24,14 +24,14 @@ RUN export REPO=$(mktemp /tmp/repo.XXXXXXXXX) && \
 
 RUN mkdir -p /source
 WORKDIR /source
-RUN repo init -u git://github.com/couchbase/manifest -m couchbase-server/mad-hatter/6.6.0.xml
+RUN repo init --repo-branch=maint -u git://github.com/couchbase/manifest -m couchbase-server/spock/5.1.1.xml
 RUN repo sync
 ENV GOPATH="/source/ns_server/deps/gocode:/source/godeps"
 WORKDIR /source/ns_server/deps/gocode/src
 RUN mkdir -p build
-RUN for path in gozip vbmap goport godu minify gosecrets; do cd $path && go build && cd .. && mv $path/$path build/; done
+RUN for path in generate_cert gozip vbmap goport godu minify gosecrets; do cd $path && go build && cd .. && mv $path/$path build/; done
 
-FROM couchbase:community-6.6.0
+FROM couchbase:community-5.1.1
 
 COPY --from=builder /source/ns_server/deps/gocode/src/build/gozip /opt/couchbase/bin/
 COPY --from=builder /source/ns_server/deps/gocode/src/build/vbmap /opt/couchbase/bin/
@@ -39,3 +39,4 @@ COPY --from=builder /source/ns_server/deps/gocode/src/build/goport /opt/couchbas
 COPY --from=builder /source/ns_server/deps/gocode/src/build/godu /opt/couchbase/bin/priv
 COPY --from=builder /source/ns_server/deps/gocode/src/build/minify /opt/couchbase/bin/priv
 COPY --from=builder /source/ns_server/deps/gocode/src/build/gosecrets /opt/couchbase/bin/
+COPY --from=builder /source/ns_server/deps/gocode/src/build/generate_cert /opt/couchbase/bin/
