@@ -2,7 +2,7 @@ FROM ubuntu:18.04 as builder
 
 RUN apt-get update && apt-get install -y \
     build-essential curl git \
-    cmake repo \ 
+    cmake repo \
     python3 \
     && rm -rf /var/lib/apt/lists/*
 
